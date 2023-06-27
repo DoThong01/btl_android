@@ -37,5 +37,139 @@ import java.util.ArrayList;
 
 
 public class AnswerActivity extends AppCompatActivity {
+    private RecyclerView recyclerView;
+    private AnswerAdapter adapter;
+    private LinearLayoutManager lLayout;
+    private DatabaseHelper mDBHelper;
+    public ArrayList<Items> listItem = null;
+    Toolbar toolbar;
+    Button btnSubmit;
+    RelativeLayout relativeLayout;
+    TextView second, txtTitle;
+    ImageView imgNextPage;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.list_recycler_layout);
+        addControl();
+        addEvents();
+    }
+
+    private void addEvents() {
+        final Intent intent = getIntent();
+        int question = intent.getIntExtra("question", 0);
+        mDBHelper = new DatabaseHelper(this);
+        File database = getApplicationContext().getDatabasePath(DatabaseHelper.DBNAME);
+        if (false == database.exists()) {
+            mDBHelper.getReadableDatabase();
+            if (copyDatabase(this)) {
+                Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show();
+            } else
+                Toast.makeText(this, "error", Toast.LENGTH_LONG).show();
+        }
+
+        Bundle bundle = getIntent().getExtras();
+        listItem = bundle.getParcelableArrayList("list");
+        adapter = new AnswerAdapter(listItem, this);
+        recyclerView.setAdapter(adapter);
+        recyclerView.scrollToPosition(question - 1);
+
+        second.setVisibility(View.INVISIBLE);
+        btnSubmit.setVisibility(View.GONE);
+
+        imgNextPage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(AnswerActivity.this);
+                alertDialog.setTitle(getResources().getString(R.string.titletDialog));
+                alertDialog.setMessage(getResources().getString(R.string.mesageDialog));
+
+                final EditText input = new EditText(AnswerActivity.this);
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                input.setHint(getResources().getString(R.string.mesageDialog));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+                input.setLayoutParams(lp);
+                alertDialog.setView(input);
+                alertDialog.setIcon(R.drawable.search);
+                alertDialog.setPositiveButton(getString(R.string.agree),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (!input.getText().toString().isEmpty()) {
+                                    int page = Integer.parseInt(input.getText().toString());
+                                    if (page > listItem.size()) {
+                                        Toast.makeText(AnswerActivity.this, getResources().getString(R.string.noResuilt), Toast.LENGTH_SHORT).show();
+                                    } else
+                                        recyclerView.scrollToPosition(page - 1);
+                                }
+                            }
+                        });
+
+                alertDialog.setNegativeButton(getString(R.string.cancel),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+
+                alertDialog.show();
+
+            }
+        });
+
+    }
+
+    private void addControl() {
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        //quay về activity trước
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        relativeLayout = (RelativeLayout) findViewById(R.id.rltLayout);
+        relativeLayout.setVisibility(View.VISIBLE);
+        second = (TextView) findViewById(R.id.second);
+        imgNextPage = (ImageView) findViewById(R.id.imgNextPage);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);//mũi tên quay về
+        btnSubmit = (Button) findViewById(R.id.btnSubmit);
+
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+        lLayout = new LinearLayoutManager(this);
+
+        lLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerView.setLayoutManager(lLayout);
+        txtTitle = (TextView) findViewById(R.id.txtTitle);
+        txtTitle.setVisibility(View.VISIBLE);
+        txtTitle.setText(getResources().getString(R.string.test));
+    }
+
+    private boolean copyDatabase(Context context) {
+        try {
+            InputStream inputStream = context.getAssets().open(DatabaseHelper.DBNAME);
+            String outFileName = DatabaseHelper.DBLOCATION + DatabaseHelper.DBNAME;
+            OutputStream outputStream = new FileOutputStream(outFileName);
+            byte[] buff = new byte[1024];
+            int lenght = 0;
+            while ((lenght = inputStream.read(buff)) > 0) {
+                outputStream.write(buff, 0, lenght);
+            }
+            outputStream.flush();
+            outputStream.close();
+            Log.v("Mai", "DB copied");
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
