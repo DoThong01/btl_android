@@ -40,7 +40,6 @@ public class MyAnswerActivity extends AppCompatActivity {
         addControl();
         addEvent();
     }
-
     private void addEvent() {
         int i = 0;
         for (Items items : listItem) {

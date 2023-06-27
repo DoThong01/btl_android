@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.dhtl.btl_ptud.R;
 
-
 public class MainActivity extends AppCompatActivity {
     TableRow trBook, trTest, trGuide, trSuggest;
     ViewFlipper viewFlipper;
